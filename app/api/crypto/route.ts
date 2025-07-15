@@ -111,7 +111,6 @@ export async function GET(req: NextRequest) {
 
     // If CoinAPI returns any other error, forward it to the frontend
     if (res.status !== 200) {
-      console.error("CoinAPI error:", data);
       return new Response(JSON.stringify({ error: data.error || data.message || 'Unknown error from CoinAPI', status: res.status }), {
         status: res.status,
         headers: { "Content-Type": "application/json" }
