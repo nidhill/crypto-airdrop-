@@ -94,10 +94,8 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    const data = await res.json();
-
-    // Check if the API returned a quota exceeded error (403)
-    if (res.status === 403 && data.QuotaName === 'Insufficient Usage Credits or Subscription') {
+    // Check if the API returned a quota exceeded error (403) before parsing JSON
+    if (res.status === 403) {
       console.warn("CoinAPI quota exceeded, using fallback mock data");
       
       return new Response(JSON.stringify(mockCryptoData), {
@@ -108,6 +106,8 @@ export async function GET(req: NextRequest) {
         }
       });
     }
+
+    const data = await res.json();
 
     // If CoinAPI returns any other error, forward it to the frontend
     if (res.status !== 200) {
