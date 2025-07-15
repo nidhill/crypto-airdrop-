@@ -107,9 +107,22 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // Check if response is ok before parsing JSON
+    if (!res.ok) {
+      console.warn(`CoinAPI returned status ${res.status}, using fallback mock data`);
+      
+      return new Response(JSON.stringify(mockCryptoData), {
+        status: 200,
+        headers: { 
+          "Content-Type": "application/json",
+          "X-Data-Source": "fallback"
+        }
+      });
+    }
+
     const data = await res.json();
 
-    // If CoinAPI returns any other error, forward it to the frontend
+    // If we somehow get here with a non-200 status, handle it
     if (res.status !== 200) {
       return new Response(JSON.stringify({ error: data.error || data.message || 'Unknown error from CoinAPI', status: res.status }), {
         status: res.status,
