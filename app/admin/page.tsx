@@ -99,6 +99,7 @@ export default function AdminPage() {
     tags: '',
     difficulty: 'Medium',
     featured: true, // Default to true
+    image: null as File | null,
   });
   const [newNews, setNewNews] = useState({
     title: '',
@@ -113,6 +114,8 @@ export default function AdminPage() {
   const [editAirdrop, setEditAirdrop] = useState<any | null>(null);
   const [editAirdropError, setEditAirdropError] = useState('');
   const [editAirdropSuccess, setEditAirdropSuccess] = useState('');
+
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -159,16 +162,36 @@ export default function AdminPage() {
   const handleAddAirdrop = async () => {
     setAddAirdropError('');
     setAddAirdropSuccess('');
+    let imageUrl = '';
+    
     try {
+      // Upload image if present
+      if (newAirdrop.image) {
+        const fileExt = newAirdrop.image.name.split('.').pop();
+        const fileName = `airdrop-${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('airdrop-images')
+          .upload(fileName, newAirdrop.image);
+          
+        if (uploadError) throw uploadError;
+        
+        const { data: urlData } = supabase.storage
+          .from('airdrop-images')
+          .getPublicUrl(fileName);
+          
+        imageUrl = urlData.publicUrl;
+      }
+      
       await createAirdrop({
         ...newAirdrop,
         tags: newAirdrop.tags.split(',').map((t) => t.trim()),
         participants: 0,
         time_left: '',
-        image_url: '',
+        image_url: imageUrl,
         difficulty: newAirdrop.difficulty as 'Easy' | 'Medium' | 'Hard',
-        // Remove created_at, Supabase will handle it
       });
+      
       setAddAirdropSuccess('Airdrop added successfully!');
       setNewAirdrop({
         title: '',
@@ -179,7 +202,9 @@ export default function AdminPage() {
         tags: '',
         difficulty: 'Medium',
         featured: true,
+        image: null,
       });
+      setImagePreview(null);
       setRefreshAirdrops((c) => c + 1);
     } catch (err: any) {
       setAddAirdropError(err.message || 'Failed to add airdrop');
@@ -223,6 +248,23 @@ export default function AdminPage() {
       category: 'Protocol Updates',
       url: ''
     });
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewAirdrop({ ...newAirdrop, image: file });
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  };
+
+  const removeImage = () => {
+    setNewAirdrop({ ...newAirdrop, image: null });
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
   };
 
   return (
@@ -370,6 +412,56 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
+                  <div className="mb-4">
+                    <Label htmlFor="featured" className="mb-1 block">Featured</Label>
+                    <input
+                      id="featured"
+                      type="checkbox"
+                      checked={newAirdrop.featured}
+                      onChange={e => setNewAirdrop({ ...newAirdrop, featured: e.target.checked })}
+                      className="mr-2"
+                    />
+                    <span>Show on Home page</span>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="airdropImage">Airdrop Image</Label>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      id="airdropImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="cursor-pointer"
+                    />
+                    {imagePreview && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={removeImage}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {imagePreview && (
+                    <div className="mt-4">
+                      <p className="text-sm text-muted-foreground mb-2">Image Preview:</p>
+                      <div className="relative w-full max-w-md">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-48 object-cover rounded-lg border"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
@@ -396,19 +488,6 @@ export default function AdminPage() {
                       value={newAirdrop.tags}
                       onChange={(e) => setNewAirdrop({...newAirdrop, tags: e.target.value})}
                     />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="mb-4">
-                    <Label htmlFor="featured" className="mb-1 block">Featured</Label>
-                    <input
-                      id="featured"
-                      type="checkbox"
-                      checked={newAirdrop.featured}
-                      onChange={e => setNewAirdrop({ ...newAirdrop, featured: e.target.checked })}
-                      className="mr-2"
-                    />
-                    <span>Show on Home page</span>
                   </div>
                 </div>
                 <Button onClick={handleAddAirdrop} className="w-full">

@@ -86,11 +86,12 @@ const mockCryptoData = [
 
 export async function GET(req: NextRequest) {
   const url = "https://rest.coinapi.io/v1/assets";
+  const apiKey = "f7c2502c-567c-48dd-97de-d0649985cb54";
   
   try {
     const res = await fetch(url, {
       headers: {
-        "X-CoinAPI-Key": "15a42019-4385-4a32-993e-4cded7bec83f"
+        "X-CoinAPI-Key": apiKey
       }
     });
 

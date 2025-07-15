@@ -12,7 +12,9 @@ import {
   Users, 
   Clock,
   Star,
-  Heart
+  Heart,
+  TrendingUp,
+  Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -48,84 +50,123 @@ export function AirdropCard({ airdrop, className }: AirdropCardProps) {
   return (
     <Card 
       className={cn(
-        "group overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 min-h-[300px] flex flex-col", // Reduced min-h for smaller card
-        airdrop.featured && "ring-2 ring-primary/20 shadow-lg shadow-primary/10",
+        "group overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-2 min-h-[400px] flex flex-col relative",
+        airdrop.featured && "ring-2 ring-primary/30 shadow-xl shadow-primary/20 bg-gradient-to-br from-primary/5 to-accent/5",
         className
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <CardHeader className="pb-2 pt-3 px-4"> {/* Reduce padding */}
+      {/* Image Section */}
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
+        {airdrop.image_url ? (
+          <img 
+            src={airdrop.image_url} 
+            alt={airdrop.title}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-accent/20">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                <TrendingUp className="w-8 h-8 text-primary" />
+              </div>
+              <p className="text-sm font-medium text-primary">{airdrop.chain}</p>
+            </div>
+          </div>
+        )}
+        
+        {/* Overlay badges */}
+        <div className="absolute top-3 left-3 flex gap-2">
+          {airdrop.featured && (
+            <Badge className="bg-primary/90 text-white border-0">
+              <Star className="w-3 h-3 mr-1" />
+              Featured
+            </Badge>
+          )}
+          <Badge 
+            variant="secondary" 
+            className={cn("text-xs font-medium", difficultyColors[airdrop.difficulty])}
+          >
+            <Shield className="w-3 h-3 mr-1" />
+            {airdrop.difficulty}
+          </Badge>
+        </div>
+        
+        {/* Heart button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="absolute top-3 right-3 p-2 h-8 w-8 bg-white/90 hover:bg-white"
+          onClick={() => setIsLiked(!isLiked)}
+        >
+          <Heart 
+            className={cn(
+              "w-4 h-4 transition-colors",
+              isLiked ? "fill-red-500 text-red-500" : "text-gray-600"
+            )} 
+          />
+        </Button>
+      </div>
+
+      <CardHeader className="pb-3 pt-4 px-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="font-bold text-xl group-hover:text-primary transition-colors line-clamp-1">
                 {airdrop.title}
               </h3>
-              {airdrop.featured && (
-                <Star className="w-4 h-4 text-accent fill-accent" />
-              )}
             </div>
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="secondary" className="text-xs">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs font-medium">
                 {airdrop.chain}
-              </Badge>
-              <Badge 
-                variant="outline" 
-                className={cn("text-xs", difficultyColors[airdrop.difficulty])}
-              >
-                {airdrop.difficulty}
               </Badge>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="p-1 h-8 w-8"
-            onClick={() => setIsLiked(!isLiked)}
-          >
-            <Heart 
-              className={cn(
-                "w-4 h-4 transition-colors",
-                isLiked ? "fill-red-500 text-red-500" : "text-muted-foreground"
-              )} 
-            />
-          </Button>
         </div>
       </CardHeader>
 
-      <CardContent className="pb-2 px-4 flex-1 flex flex-col justify-between"> {/* Reduce padding */}
-        <div className="space-y-3 flex-1 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+      <CardContent className="pb-3 px-4 flex-1 flex flex-col justify-between">
+        <div className="space-y-4 flex-1 flex flex-col justify-between">
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {airdrop.description}
+          </p>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
               <DollarSign className="w-4 h-4" />
-              <span className="font-medium text-foreground">{airdrop.reward}</span>
+              <div>
+                <p className="text-xs text-muted-foreground">Reward</p>
+                <p className="font-semibold text-sm">{airdrop.reward}</p>
+              </div>
             </div>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
               <Users className="w-4 h-4" />
-              <span>{airdrop.participants.toLocaleString()}</span>
+              <div>
+                <p className="text-xs text-muted-foreground">Participants</p>
+                <p className="font-semibold text-sm">{airdrop.participants?.toLocaleString() || '0'}</p>
+              </div>
             </div>
           </div>
 
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {airdrop.description}
-          </p>
-
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-accent/10">
             <Clock className="w-4 h-4" />
-            <span>{airdrop.time_left}</span>
+            <div>
+              <p className="text-xs text-muted-foreground">Time Left</p>
+              <p className="font-semibold text-sm text-accent">{airdrop.time_left}</p>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-1">
             {(Array.isArray(airdrop.tags) ? airdrop.tags : typeof airdrop.tags === 'string' ? airdrop.tags.split(',').map(t => t.trim()) : [])
               .slice(0, 3)
               .map((tag) => (
-                <Badge key={tag} variant="outline" className="text-xs">
+                <Badge key={tag} variant="secondary" className="text-xs">
                   {tag}
                 </Badge>
               ))}
             {Array.isArray(airdrop.tags) && airdrop.tags.length > 3 && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="secondary" className="text-xs">
                 +{airdrop.tags.length - 3}
               </Badge>
             )}
@@ -133,17 +174,17 @@ export function AirdropCard({ airdrop, className }: AirdropCardProps) {
         </div>
       </CardContent>
 
-      <CardFooter className="pt-0 px-4 pb-3"> {/* Reduce padding */}
+      <CardFooter className="pt-0 px-4 pb-4">
         <div className="flex gap-2 w-full">
-          <Button asChild className="flex-1" size="sm">
+          <Button asChild className="flex-1 font-medium" size="default">
             <Link href={`/airdrop/${airdrop.id}`}>
               View Details
             </Link>
           </Button>
           <Button 
             variant="outline" 
-            size="sm"
-            className="px-3"
+            size="default"
+            className="px-4"
             onClick={() => window.open(airdrop.link, '_blank')}
           >
             <ExternalLink className="w-4 h-4" />
